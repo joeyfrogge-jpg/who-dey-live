@@ -8,9 +8,6 @@ import Link from "next/link";
 import { APP_TAGLINE } from "@/lib/constants";
 import { Radio, Calendar, Users, UsersRound } from "lucide-react";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 60;
-
 export default async function HomePage() {
   const { games, freshness } = await getBengalsSchedule();
   const live = getLiveGame(games);
@@ -20,7 +17,6 @@ export default async function HomePage() {
 
   return (
     <div className="space-y-8">
-      {/* Hero */}
       <section className="text-center pt-2 pb-4">
         <h1 className="font-display text-4xl sm:text-5xl md:text-6xl tracking-tight leading-none">
           WHO DEY <span className="text-bengals-orange">LIVE</span>
@@ -36,7 +32,6 @@ export default async function HomePage() {
         )}
       </section>
 
-      {/* Live game spotlight */}
       {live && (
         <section className="space-y-4">
           <h2 className="font-display text-lg flex items-center gap-2">
@@ -46,7 +41,7 @@ export default async function HomePage() {
           <Scoreboard game={live} large showVenue />
           <div className="text-center">
             <Link
-              href={`/game/${live.id}`}
+              href={`/game/${live.id}/`}
               className="inline-flex items-center gap-2 rounded-lg bg-bengals-orange px-6 py-3 font-bold text-black shadow-orange-glow hover:bg-bengals-orange-bright active:scale-[0.98] transition-all"
             >
               Open Game Center
@@ -56,7 +51,6 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Next home game — highest visual priority */}
       {nextHome && (!next || nextHome.id !== next.id) && (
         <section className="space-y-3">
           <h2 className="font-display text-lg text-bengals-orange tracking-wide">
@@ -66,7 +60,6 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Next game */}
       {next && (
         <section className="space-y-3">
           <h2 className="font-display text-lg tracking-wide">
@@ -88,15 +81,11 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Recent results */}
       {recent.length > 0 && (
         <section className="space-y-3">
           <div className="flex items-center justify-between">
             <h2 className="font-display text-lg tracking-wide">RECENT RESULTS</h2>
-            <Link
-              href="/archive"
-              className="text-sm text-bengals-orange hover:underline"
-            >
+            <Link href="/archive/" className="text-sm text-bengals-orange hover:underline">
               View archive →
             </Link>
           </div>
@@ -108,13 +97,12 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Quick links — match mockup style */}
       <section className="grid grid-cols-2 gap-3">
         {[
-          { href: "/schedule", label: "Schedule", sub: "Scores & Times", icon: Calendar },
-          { href: "/players", label: "Players", sub: "Roster & Stats", icon: Users },
-          { href: live ? `/game/${live.id}` : "/schedule", label: "Live", sub: "Bengals Live", icon: Radio },
-          { href: "/archive", label: "Community", sub: "Fans & Culture", icon: UsersRound },
+          { href: "/schedule/", label: "Schedule", sub: "Scores & Times", icon: Calendar },
+          { href: "/players/", label: "Players", sub: "Roster & Stats", icon: Users },
+          { href: live ? `/game/${live.id}/` : "/schedule/", label: "Live", sub: "Bengals Live", icon: Radio },
+          { href: "/archive/", label: "Community", sub: "Fans & Culture", icon: UsersRound },
         ].map((l) => (
           <Link
             key={l.href + l.label}
