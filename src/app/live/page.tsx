@@ -20,7 +20,7 @@ export default async function LivePage() {
         <Scoreboard game={live} large showVenue />
         <div className="text-center">
           <Link
-            href={`/game/${live.id}/`}
+            href={`/game/${live.id}`}
             className="inline-flex rounded-lg bg-bengals-orange px-6 py-3 font-bold text-black"
           >
             Open Game Center →
@@ -38,12 +38,12 @@ export default async function LivePage() {
         <div className="space-y-3">
           <h2 className="text-sm uppercase tracking-wider text-bengals-gray">Next up</h2>
           <GameCard game={next} featured />
-          <Link href={`/game/${next.id}/`} className="text-sm text-bengals-orange">
+          <Link href={`/game/${next.id}`} className="text-sm text-bengals-orange">
             View game center →
           </Link>
         </div>
       )}
-      <Link href="/schedule/" className="text-sm text-bengals-orange block">
+      <Link href="/schedule" className="text-sm text-bengals-orange block">
         Full schedule →
       </Link>
     </div>
