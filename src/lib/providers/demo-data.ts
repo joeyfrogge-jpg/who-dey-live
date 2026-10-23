@@ -3,10 +3,9 @@
  * Used only when ESPN is unreachable.
  */
 
-import type { Game, GameDetail, RosterPlayer } from "@/types";
-import { BENGALS } from "@/lib/constants";
+import type { Game, GameDetail, RosterPlayer, Team } from "@/types";
 
-const CIN: any = {
+const CIN: Team = {
   id: "4",
   name: "Bengals",
   abbreviation: "CIN",
@@ -17,7 +16,7 @@ const CIN: any = {
   logo: "https://a.espncdn.com/i/teamlogos/nfl/500/cin.png",
 };
 
-function opp(abbr: string, name: string, loc: string, id: string) {
+function opp(abbr: string, name: string, loc: string, id: string): Team {
   return {
     id,
     name,

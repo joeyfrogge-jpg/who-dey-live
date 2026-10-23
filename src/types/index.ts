@@ -141,13 +141,13 @@ export interface Game {
   week?: number;
   name: string;
   shortName?: string;
-  date: string; // ISO
-  kickoffEastern: string; // formatted America/New_York
+  date: string;
+  kickoffEastern: string;
   status: GameStatus;
   period?: GamePeriod;
   clock?: string;
   venue?: string;
-  isHome: boolean; // Bengals home?
+  isHome: boolean;
   isBengalsHome: boolean;
   bengals: Team;
   opponent: Team;
@@ -163,9 +163,7 @@ export interface Game {
   timeoutsAway?: number;
 }
 
-export interface ScheduleEntry extends Game {
-  // alias for schedule list
-}
+export type ScheduleEntry = Game;
 
 export interface GameDetail extends Game {
   plays?: PlayEvent[];

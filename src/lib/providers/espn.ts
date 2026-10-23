@@ -7,6 +7,7 @@ import type {
   Game,
   GameDetail,
   GameStatus,
+  GamePeriod,
   RosterPlayer,
   Team,
   PlayEvent,
@@ -15,7 +16,60 @@ import { BENGALS } from "@/lib/constants";
 import { formatInTimeZone } from "date-fns-tz";
 
 const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/football/nfl";
-const TEAM_ID = BENGALS.id; // "4"
+const TEAM_ID = BENGALS.id;
+
+type EspnTeam = {
+  id?: string;
+  name?: string;
+  abbreviation?: string;
+  displayName?: string;
+  shortDisplayName?: string;
+  location?: string;
+  color?: string;
+  alternateColor?: string;
+  logo?: string;
+  logos?: { href?: string }[];
+  recordSummary?: string;
+};
+
+type EspnCompetitor = {
+  homeAway?: string;
+  score?: string | number;
+  team?: EspnTeam;
+  records?: { summary?: string }[];
+};
+
+type EspnStatus = {
+  period?: number;
+  displayClock?: string;
+  clock?: number;
+  type?: { name?: string; state?: string };
+};
+
+type EspnCompetition = {
+  date?: string;
+  status?: EspnStatus;
+  competitors?: EspnCompetitor[];
+  venue?: { fullName?: string; name?: string };
+  broadcasts?: { names?: string[] }[];
+  situation?: {
+    possession?: string;
+    downDistanceText?: string;
+    possessionText?: string;
+  };
+  week?: { number?: number };
+};
+
+type EspnEvent = {
+  id?: string;
+  date?: string;
+  name?: string;
+  shortName?: string;
+  seasonType?: { type?: number };
+  week?: { number?: number };
+  competitions?: EspnCompetition[];
+  status?: EspnStatus;
+};
 
 function mapStatus(espnStatus: string, state?: string): GameStatus {
   const s = (state || espnStatus || "").toLowerCase();
@@ -29,8 +83,8 @@ function mapStatus(espnStatus: string, state?: string): GameStatus {
   return "upcoming";
 }
 
-function toTeam(competitor: any): Team {
-  const t = competitor?.team || competitor || {};
+function toTeam(competitor: EspnCompetitor): Team {
+  const t = competitor?.team || {};
   return {
     id: String(t.id || ""),
     name: t.name || t.displayName || "",
@@ -40,19 +94,19 @@ function toTeam(competitor: any): Team {
     location: t.location,
     color: t.color,
     alternateColor: t.alternateColor,
-    logo: t.logo || (t.logos?.[0]?.href),
+    logo: t.logo || t.logos?.[0]?.href,
     record: competitor?.records?.[0]?.summary || t.recordSummary,
   };
 }
 
-function parseGame(event: any, season: number): Game | null {
+function parseGame(event: EspnEvent, season: number): Game | null {
   try {
     const competition = event.competitions?.[0];
     if (!competition) return null;
 
     const competitors = competition.competitors || [];
-    const home = competitors.find((c: any) => c.homeAway === "home");
-    const away = competitors.find((c: any) => c.homeAway === "away");
+    const home = competitors.find((c) => c.homeAway === "home");
+    const away = competitors.find((c) => c.homeAway === "away");
     if (!home || !away) return null;
 
     const isBengalsHome = String(home.team?.id) === TEAM_ID;
@@ -62,7 +116,7 @@ function parseGame(event: any, season: number): Game | null {
     const statusObj = competition.status || event.status || {};
     const status = mapStatus(statusObj.type?.name || "", statusObj.type?.state);
     const period = statusObj.period;
-    const clock = statusObj.displayClock || statusObj.clock;
+    const clock = statusObj.displayClock || (statusObj.clock != null ? String(statusObj.clock) : undefined);
 
     const date = event.date || competition.date;
     const kickoffEastern = date
@@ -81,7 +135,7 @@ function parseGame(event: any, season: number): Game | null {
 
     const venue = competition.venue?.fullName || competition.venue?.name;
     const broadcasts = (competition.broadcasts || [])
-      .flatMap((b: any) => b.names || [])
+      .flatMap((b) => b.names || [])
       .filter(Boolean);
 
     return {
@@ -91,10 +145,10 @@ function parseGame(event: any, season: number): Game | null {
       week: event.week?.number ?? competition.week?.number,
       name: event.name || event.shortName || "",
       shortName: event.shortName,
-      date,
+      date: date || "",
       kickoffEastern,
       status,
-      period: period ? String(period) : undefined,
+      period: period ? (String(period) as GamePeriod) : undefined,
       clock: clock || undefined,
       venue,
       isHome: isBengalsHome,
@@ -104,7 +158,12 @@ function parseGame(event: any, season: number): Game | null {
       score,
       broadcasts,
       lastUpdated: new Date().toISOString(),
-      possession: competition.situation?.possession === home.team?.id ? "home" : competition.situation?.possession === away.team?.id ? "away" : null,
+      possession:
+        competition.situation?.possession === home.team?.id
+          ? "home"
+          : competition.situation?.possession === away.team?.id
+          ? "away"
+          : null,
       downDistance: competition.situation?.downDistanceText,
       ballPosition: competition.situation?.possessionText,
     };
@@ -127,14 +186,14 @@ export async function fetchEspnTeamSchedule(season: number): Promise<{
       return { games: [], error: `ESPN ${res.status}` };
     }
     const data = await res.json();
-    const events = data.events || [];
+    const events: EspnEvent[] = data.events || [];
     const games = events
-      .map((e: any) => parseGame(e, season))
+      .map((e) => parseGame(e, season))
       .filter(Boolean) as Game[];
 
     return { games };
-  } catch (e: any) {
-    return { games: [], error: e?.message || "fetch failed" };
+  } catch (e: unknown) {
+    return { games: [], error: e instanceof Error ? e.message : "fetch failed" };
   }
 }
 
@@ -152,12 +211,12 @@ export async function fetchEspnGameSummary(gameId: string): Promise<{
     const data = await res.json();
 
     const header = data.header;
-    const competition = header?.competitions?.[0] || data.competitions?.[0];
+    const competition: EspnCompetition = header?.competitions?.[0] || data.competitions?.[0];
     if (!competition) return { detail: null };
 
-    const eventLike = {
+    const eventLike: EspnEvent = {
       id: gameId,
-      date: competition.date || header?.competitions?.[0]?.date,
+      date: competition.date,
       name: header?.name || "",
       shortName: header?.shortName,
       seasonType: header?.season,
@@ -170,8 +229,12 @@ export async function fetchEspnGameSummary(gameId: string): Promise<{
     if (!base) return { detail: null };
 
     const plays: PlayEvent[] = [];
-    const drives = data.drives?.previous || data.drives?.current ? [data.drives.current, ...(data.drives.previous || [])].filter(Boolean) : [];
-    for (const drive of drives) {
+    const driveList = [
+      data.drives?.current,
+      ...(data.drives?.previous || []),
+    ].filter(Boolean);
+
+    for (const drive of driveList) {
       for (const p of drive.plays || []) {
         plays.push({
           id: String(p.id || Math.random()),
@@ -198,7 +261,7 @@ export async function fetchEspnGameSummary(gameId: string): Promise<{
     const detail: GameDetail = {
       ...base,
       plays: plays.slice(0, 40),
-      drives: drives.map((d: any, i: number) => ({
+      drives: driveList.map((d: { id?: string; team?: { id?: string }; offensivePlays?: number; plays?: unknown[]; yards?: number; timeOfPossession?: string; result?: { displayText?: string }; displayResult?: string; isScore?: boolean }, i: number) => ({
         id: String(d.id || i),
         teamId: String(d.team?.id || ""),
         plays: d.offensivePlays || d.plays?.length || 0,
@@ -211,12 +274,12 @@ export async function fetchEspnGameSummary(gameId: string): Promise<{
     };
 
     return { detail };
-  } catch (e: any) {
-    return { detail: null, error: e?.message };
+  } catch (e: unknown) {
+    return { detail: null, error: e instanceof Error ? e.message : "error" };
   }
 }
 
-export async function fetchEspnRoster(season: number): Promise<{
+export async function fetchEspnRoster(_season: number): Promise<{
   players: RosterPlayer[];
   error?: string;
 }> {
@@ -252,7 +315,7 @@ export async function fetchEspnRoster(season: number): Promise<{
       }
     }
     return { players };
-  } catch (e: any) {
-    return { players: [], error: e?.message };
+  } catch (e: unknown) {
+    return { players: [], error: e instanceof Error ? e.message : "error" };
   }
 }
