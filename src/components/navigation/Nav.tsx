@@ -2,20 +2,22 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Calendar, Users, Archive, Settings, Zap } from "lucide-react";
+import { Home, Calendar, Radio, Users, MoreHorizontal } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
-import { APP_NAME } from "@/lib/constants";
 
 const links = [
   { href: "/", label: "Home", icon: Home },
   { href: "/schedule", label: "Schedule", icon: Calendar },
+  { href: "/live", label: "Live", icon: Radio },
   { href: "/players", label: "Players", icon: Users },
-  { href: "/archive", label: "Archive", icon: Archive },
-  { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/archive", label: "More", icon: MoreHorizontal },
 ];
 
 export function Nav() {
   const pathname = usePathname();
+
+  // Treat /game/* as Live active
+  const isLiveRoute = pathname.startsWith("/game") || pathname === "/live";
 
   return (
     <>
@@ -34,11 +36,16 @@ export function Nav() {
           </Link>
           <nav className="flex items-center gap-1">
             {links.map(({ href, label, icon: Icon }) => {
-              const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+              const active =
+                href === "/"
+                  ? pathname === "/"
+                  : href === "/live"
+                  ? isLiveRoute
+                  : pathname.startsWith(href);
               return (
                 <Link
                   key={href}
-                  href={href}
+                  href={href === "/live" ? "/schedule" : href}
                   className={cn(
                     "flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium transition-colors",
                     active
@@ -59,17 +66,27 @@ export function Nav() {
       <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-bengals-charcoal-light bg-bengals-near-black/95 backdrop-blur-md safe-bottom">
         <div className="flex justify-around py-2">
           {links.map(({ href, label, icon: Icon }) => {
-            const active = href === "/" ? pathname === "/" : pathname.startsWith(href);
+            const active =
+              href === "/"
+                ? pathname === "/"
+                : href === "/live"
+                ? isLiveRoute
+                : pathname.startsWith(href);
             return (
               <Link
                 key={href}
-                href={href}
+                href={href === "/live" ? (isLiveRoute ? pathname : "/schedule") : href}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium",
+                  "flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium min-w-[56px]",
                   active ? "text-bengals-orange" : "text-bengals-gray"
                 )}
               >
-                <Icon className={cn("h-5 w-5", active && "drop-shadow-[0_0_6px_rgba(251,79,20,0.6)]")} />
+                <Icon
+                  className={cn(
+                    "h-5 w-5",
+                    active && "drop-shadow-[0_0_6px_rgba(251,79,20,0.6)]"
+                  )}
+                />
                 {label}
               </Link>
             );
