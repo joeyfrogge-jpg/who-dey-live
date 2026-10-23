@@ -14,7 +14,7 @@ export const BENGALS = {
   city: "Cincinnati, OH",
 } as const;
 
-export const SEASON = Number(process.env.NEXT_PUBLIC_SEASON || "2025");
+export const SEASON = Number(process.env.NEXT_PUBLIC_SEASON || "2026");
 
 export const APP_NAME = "WHO DEY LIVE";
 export const APP_TAGLINE = "One team. Every Bengals game. Every meaningful moment.";

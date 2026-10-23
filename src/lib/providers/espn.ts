@@ -1,191 +1,258 @@
 /**
- * ESPN public endpoints — no API key required.
+ * ESPN public API client for Bengals data.
+ * Uses site.api.espn.com (no key required).
  */
-import type { Game, GameDetail, RosterPlayer, Team, GameStatus } from "@/types";
-import { BENGALS, SEASON } from "@/lib/constants";
-import { formatKickoff } from "@/lib/time/eastern";
 
-const ESPN_SITE = "https://site.api.espn.com/apis/site/v2/sports/football/nfl";
-const TEAM_ID = BENGALS.id;
+import type {
+  Game,
+  GameDetail,
+  GameStatus,
+  RosterPlayer,
+  Team,
+  PlayEvent,
+} from "@/types";
+import { BENGALS } from "@/lib/constants";
+import { formatInTimeZone } from "date-fns-tz";
 
-function mapStatus(s?: string): GameStatus {
-  if (!s) return "upcoming";
-  const u = s.toLowerCase();
-  if (u.includes("halftime")) return "halftime";
-  if (u.includes("in") || u === "status_in_progress") return "live";
-  if (u.includes("final") || u === "status_final") return "final";
-  if (u.includes("postpone")) return "postponed";
-  if (u.includes("delay")) return "delayed";
-  if (u.includes("cancel")) return "cancelled";
+const ESPN_BASE = "https://site.api.espn.com/apis/site/v2/sports/football/nfl";
+const TEAM_ID = BENGALS.id; // "4"
+
+function mapStatus(espnStatus: string, state?: string): GameStatus {
+  const s = (state || espnStatus || "").toLowerCase();
+  if (s.includes("in") || s === "in") return "live";
+  if (s.includes("halftime") || s === "halftime") return "halftime";
+  if (s.includes("final") || s === "post") return "final";
+  if (s.includes("pre") || s === "pre") return "pregame";
+  if (s.includes("postponed")) return "postponed";
+  if (s.includes("delayed")) return "delayed";
+  if (s.includes("cancel")) return "cancelled";
   return "upcoming";
 }
 
-function mapTeam(t: any): Team {
+function toTeam(competitor: any): Team {
+  const t = competitor?.team || competitor || {};
   return {
-    id: String(t?.id ?? ""),
-    name: t?.name ?? t?.displayName ?? "",
-    abbreviation: t?.abbreviation ?? "",
-    displayName: t?.displayName ?? t?.name ?? "",
-    shortDisplayName: t?.shortDisplayName,
-    location: t?.location,
-    color: t?.color,
-    alternateColor: t?.alternateColor,
-    logo: t?.logo ?? t?.logos?.[0]?.href,
-    record: t?.record?.items?.[0]?.summary ?? t?.recordSummary,
+    id: String(t.id || ""),
+    name: t.name || t.displayName || "",
+    abbreviation: t.abbreviation || "",
+    displayName: t.displayName || t.name || "",
+    shortDisplayName: t.shortDisplayName || t.abbreviation,
+    location: t.location,
+    color: t.color,
+    alternateColor: t.alternateColor,
+    logo: t.logo || (t.logos?.[0]?.href),
+    record: competitor?.records?.[0]?.summary || t.recordSummary,
   };
 }
 
-function eventToGame(ev: any, season: number): Game | null {
+function parseGame(event: any, season: number): Game | null {
   try {
-    const comp = ev.competitions?.[0];
-    if (!comp) return null;
-    const competitors = comp.competitors || [];
+    const competition = event.competitions?.[0];
+    if (!competition) return null;
+
+    const competitors = competition.competitors || [];
     const home = competitors.find((c: any) => c.homeAway === "home");
     const away = competitors.find((c: any) => c.homeAway === "away");
     if (!home || !away) return null;
-    const isBengalsHome = String(home.id) === TEAM_ID || home.team?.abbreviation === "CIN";
-    const oppSide = isBengalsHome ? away : home;
-    const date = ev.date || comp.date;
-    const status = mapStatus(ev.status?.type?.name || ev.status?.type?.description || comp.status?.type?.name);
-    let score: { home: number; away: number } | undefined;
-    if (home.score != null && away.score != null) {
-      score = { home: Number(home.score) || 0, away: Number(away.score) || 0 };
-    }
+
+    const isBengalsHome = String(home.team?.id) === TEAM_ID;
+    const bengalsComp = isBengalsHome ? home : away;
+    const oppComp = isBengalsHome ? away : home;
+
+    const statusObj = competition.status || event.status || {};
+    const status = mapStatus(statusObj.type?.name || "", statusObj.type?.state);
+    const period = statusObj.period;
+    const clock = statusObj.displayClock || statusObj.clock;
+
+    const date = event.date || competition.date;
+    const kickoffEastern = date
+      ? formatInTimeZone(new Date(date), "America/New_York", "EEE, MMM d · h:mm a zzz")
+      : "";
+
+    const score =
+      status === "upcoming" || status === "pregame"
+        ? undefined
+        : {
+            home: Number(home.score ?? 0),
+            away: Number(away.score ?? 0),
+            homeRecord: home.records?.[0]?.summary,
+            awayRecord: away.records?.[0]?.summary,
+          };
+
+    const venue = competition.venue?.fullName || competition.venue?.name;
+    const broadcasts = (competition.broadcasts || [])
+      .flatMap((b: any) => b.names || [])
+      .filter(Boolean);
+
     return {
-      id: String(ev.id),
+      id: String(event.id),
       season,
-      week: ev.week?.number ?? comp.week?.number,
-      seasonType: ev.season?.type === 1 ? "preseason" : ev.season?.type === 3 ? "postseason" : "regular",
+      seasonType: event.seasonType?.type === 3 ? "postseason" : event.seasonType?.type === 1 ? "preseason" : "regular",
+      week: event.week?.number ?? competition.week?.number,
+      name: event.name || event.shortName || "",
+      shortName: event.shortName,
       date,
-      kickoffEastern: formatKickoff(date),
+      kickoffEastern,
       status,
-      period: ev.status?.period ?? comp.status?.period,
-      clock: ev.status?.displayClock ?? comp.status?.displayClock,
-      isBengalsHome,
+      period: period ? String(period) : undefined,
+      clock: clock || undefined,
+      venue,
       isHome: isBengalsHome,
-      venue: comp.venue?.fullName || comp.venue?.name,
-      opponent: mapTeam(oppSide.team || oppSide),
-      homeTeam: mapTeam(home.team || home),
-      awayTeam: mapTeam(away.team || away),
+      isBengalsHome,
+      bengals: toTeam(bengalsComp),
+      opponent: toTeam(oppComp),
       score,
-      broadcast: comp.broadcasts?.[0]?.names?.[0] || comp.geoBroadcasts?.[0]?.media?.shortName,
+      broadcasts,
+      lastUpdated: new Date().toISOString(),
+      possession: competition.situation?.possession === home.team?.id ? "home" : competition.situation?.possession === away.team?.id ? "away" : null,
+      downDistance: competition.situation?.downDistanceText,
+      ballPosition: competition.situation?.possessionText,
     };
   } catch {
     return null;
   }
 }
 
-export async function fetchEspnTeamSchedule(season = SEASON): Promise<{ games: Game[]; error?: string }> {
+export async function fetchEspnTeamSchedule(season: number): Promise<{
+  games: Game[];
+  error?: string;
+}> {
   try {
-    const url = `${ESPN_SITE}/teams/${TEAM_ID}/schedule?season=${season}`;
-    const res = await fetch(url, { next: { revalidate: 60 }, headers: { Accept: "application/json" } });
-    if (!res.ok) return { games: [], error: `ESPN ${res.status}` };
-    const data = await res.json();
-    const games: Game[] = [];
-    for (const ev of data.events || []) {
-      const g = eventToGame(ev, season);
-      if (g) games.push(g);
+    const url = `${ESPN_BASE}/teams/${TEAM_ID}/schedule?season=${season}`;
+    const res = await fetch(url, {
+      next: { revalidate: 60 },
+      headers: { Accept: "application/json" },
+    });
+    if (!res.ok) {
+      return { games: [], error: `ESPN ${res.status}` };
     }
+    const data = await res.json();
+    const events = data.events || [];
+    const games = events
+      .map((e: any) => parseGame(e, season))
+      .filter(Boolean) as Game[];
+
     return { games };
   } catch (e: any) {
-    return { games: [], error: e?.message || "ESPN fetch failed" };
+    return { games: [], error: e?.message || "fetch failed" };
   }
 }
 
-export async function fetchEspnGameSummary(gameId: string): Promise<{ detail: GameDetail | null; error?: string }> {
+export async function fetchEspnGameSummary(gameId: string): Promise<{
+  detail: GameDetail | null;
+  error?: string;
+}> {
   try {
-    const url = `${ESPN_SITE}/summary?event=${gameId}`;
-    const res = await fetch(url, { next: { revalidate: 15 }, headers: { Accept: "application/json" } });
+    const url = `${ESPN_BASE}/summary?event=${gameId}`;
+    const res = await fetch(url, {
+      next: { revalidate: 15 },
+      headers: { Accept: "application/json" },
+    });
     if (!res.ok) return { detail: null, error: `ESPN ${res.status}` };
     const data = await res.json();
+
     const header = data.header;
-    const comp = header?.competitions?.[0];
-    if (!comp) return { detail: null, error: "No competition" };
-    const competitors = comp.competitors || [];
-    const home = competitors.find((c: any) => c.homeAway === "home");
-    const away = competitors.find((c: any) => c.homeAway === "away");
-    const isBengalsHome = String(home?.id) === TEAM_ID || home?.team?.abbreviation === "CIN";
-    const date = header?.competitions?.[0]?.date || new Date().toISOString();
-    const status = mapStatus(header?.competitions?.[0]?.status?.type?.name);
-    const baseGame: Game = {
-      id: String(header?.id || gameId),
-      season: header?.season?.year || SEASON,
+    const competition = header?.competitions?.[0] || data.competitions?.[0];
+    if (!competition) return { detail: null };
+
+    const eventLike = {
+      id: gameId,
+      date: competition.date || header?.competitions?.[0]?.date,
+      name: header?.name || "",
+      shortName: header?.shortName,
+      seasonType: header?.season,
       week: header?.week,
-      seasonType: "regular",
-      date,
-      kickoffEastern: formatKickoff(date),
-      status,
-      period: header?.competitions?.[0]?.status?.period,
-      clock: header?.competitions?.[0]?.status?.displayClock,
-      isBengalsHome,
-      isHome: isBengalsHome,
-      venue: comp.venue?.fullName,
-      opponent: mapTeam((isBengalsHome ? away : home)?.team || {}),
-      homeTeam: mapTeam(home?.team || {}),
-      awayTeam: mapTeam(away?.team || {}),
-      score: home?.score != null ? { home: Number(home.score), away: Number(away?.score) || 0 } : undefined,
+      competitions: [competition],
+      status: competition.status,
     };
-    const plays: any[] = [];
-    const drives = [...(data.drives?.previous || []), ...(data.drives?.current ? [data.drives.current] : [])];
-    for (const d of drives) {
-      for (const p of d.plays || []) {
+    const season = Number(header?.season?.year || new Date().getFullYear());
+    const base = parseGame(eventLike, season);
+    if (!base) return { detail: null };
+
+    const plays: PlayEvent[] = [];
+    const drives = data.drives?.previous || data.drives?.current ? [data.drives.current, ...(data.drives.previous || [])].filter(Boolean) : [];
+    for (const drive of drives) {
+      for (const p of drive.plays || []) {
         plays.push({
-          id: String(p.id),
+          id: String(p.id || Math.random()),
+          sequence: p.sequenceNumber,
           quarter: p.period?.number ?? p.period,
           clock: p.clock?.displayValue || "",
-          text: p.text || p.shortText || "",
-          scoringPlay: p.scoringPlay,
+          text: p.text || p.description || "",
+          shortText: p.shortText,
+          type: p.type?.text,
+          scoringPlay: !!p.scoringPlay,
           teamId: p.team?.id,
+          homeScore: p.homeScore,
+          awayScore: p.awayScore,
+          down: p.start?.down,
+          distance: p.start?.distance,
+          yardLine: p.start?.yardLine,
+          yardsGained: p.statYardage,
           isBengalsPlay: String(p.team?.id) === TEAM_ID,
         });
       }
     }
-    const teamStats: any[] = [];
-    if (data.boxscore?.teams) {
-      for (const t of data.boxscore.teams) {
-        const stats: any = { teamId: String(t.team?.id) };
-        for (const s of t.statistics || []) {
-          const name = (s.name || "").toLowerCase();
-          if (name.includes("total yard")) stats.totalYards = Number(s.value) || Number(s.displayValue);
-          if (name.includes("passing yard")) stats.passingYards = Number(s.value) || Number(s.displayValue);
-          if (name.includes("rushing yard")) stats.rushingYards = Number(s.value) || Number(s.displayValue);
-          if (name.includes("turnover")) stats.turnovers = Number(s.value) || Number(s.displayValue);
-          if (name.includes("possession")) stats.timeOfPossession = s.displayValue;
-        }
-        teamStats.push(stats);
-      }
-    }
-    return { detail: { ...baseGame, plays: plays.slice(-40).reverse(), teamStats } };
+    plays.sort((a, b) => (b.sequence || 0) - (a.sequence || 0));
+
+    const detail: GameDetail = {
+      ...base,
+      plays: plays.slice(0, 40),
+      drives: drives.map((d: any, i: number) => ({
+        id: String(d.id || i),
+        teamId: String(d.team?.id || ""),
+        plays: d.offensivePlays || d.plays?.length || 0,
+        yards: d.yards || 0,
+        timeOfPossession: d.timeOfPossession,
+        result: d.result?.displayText || d.displayResult,
+        isScore: !!d.isScore,
+        isCurrent: i === 0,
+      })),
+    };
+
+    return { detail };
   } catch (e: any) {
-    return { detail: null, error: e?.message || "ESPN summary failed" };
+    return { detail: null, error: e?.message };
   }
 }
 
-export async function fetchEspnRoster(season = SEASON): Promise<{ players: RosterPlayer[]; error?: string }> {
+export async function fetchEspnRoster(season: number): Promise<{
+  players: RosterPlayer[];
+  error?: string;
+}> {
   try {
-    const url = `${ESPN_SITE}/teams/${TEAM_ID}/roster?season=${season}`;
-    const res = await fetch(url, { next: { revalidate: 3600 }, headers: { Accept: "application/json" } });
+    const url = `${ESPN_BASE}/teams/${TEAM_ID}/roster`;
+    const res = await fetch(url, {
+      next: { revalidate: 3600 },
+      headers: { Accept: "application/json" },
+    });
     if (!res.ok) return { players: [], error: `ESPN ${res.status}` };
     const data = await res.json();
+
     const players: RosterPlayer[] = [];
-    for (const group of data.athletes || []) {
-      for (const a of group.items || [group]) {
-        if (!a.id) continue;
+    const groups = data.athletes || [];
+    for (const group of groups) {
+      for (const item of group.items || []) {
         players.push({
-          id: String(a.id),
-          fullName: a.displayName || a.fullName || `${a.firstName || ""} ${a.lastName || ""}`.trim(),
-          firstName: a.firstName,
-          lastName: a.lastName,
-          jersey: a.jersey,
-          position: a.position?.abbreviation || a.position?.name,
-          headshot: a.headshot?.href,
+          id: String(item.id),
+          fullName: item.displayName || item.fullName || `${item.firstName || ""} ${item.lastName || ""}`.trim(),
+          firstName: item.firstName,
+          lastName: item.lastName,
+          jersey: item.jersey,
+          position: item.position?.abbreviation || item.position?.name,
+          headshot: item.headshot?.href,
           teamId: TEAM_ID,
-          status: a.status?.type === "active" ? "active" : "inactive",
+          status: item.status?.type === "active" ? "active" : "inactive",
+          height: item.displayHeight,
+          weight: item.weight,
+          age: item.age,
+          experience: item.experience?.years,
+          college: item.college?.name,
         });
       }
     }
     return { players };
   } catch (e: any) {
-    return { players: [], error: e?.message || "ESPN roster failed" };
+    return { players: [], error: e?.message };
   }
 }
