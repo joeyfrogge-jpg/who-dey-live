@@ -4,11 +4,19 @@ Immersive Cincinnati Bengals game-day headquarters.
 
 **Design** matches the mobile mockups exactly (dark + orange, bottom nav, live meter, countdown, roster grid). Only example scores / dates / roster entries were replaced with real 2026 data from ESPN.
 
-## One-click deploy
+## Live App (click this)
 
-[![Deploy with Vercel](https://vercel.com/button)](https://vercel.com/new/clone?repository-url=https%3A%2F%2Fgithub.com%2Fjoeyfrogge-jpg%2Fwho-dey-live)
+The app is a full Next.js app and **must be deployed to Vercel** (free).
 
-After deploy the app is live at `https://your-project.vercel.app` — no env vars required for real ESPN data.
+**One-click deploy →**  
+https://vercel.com/new/clone?repository-url=https://github.com/joeyfrogge-jpg/who-dey-live
+
+After the ~30 second deploy finishes, Vercel gives you a permanent URL like:
+`https://who-dey-live-xxxx.vercel.app`
+
+That is the link you click to load the real web app.
+
+> Note: `https://joeyfrogge-jpg.github.io/who-dey-live/` is only the README (GitHub Pages). It is **not** the app.
 
 ## Local
 
@@ -24,3 +32,5 @@ NEXT_PUBLIC_FORCE_DEMO=false
 ```
 
 Real data is fetched from ESPN public endpoints. Fallback demo data is used only if the network call fails.
+
+No API keys required.
