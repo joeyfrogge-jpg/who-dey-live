@@ -3,8 +3,6 @@ import { GameCard } from "@/components/schedule/GameCard";
 import { Badge } from "@/components/ui/Badge";
 import { SEASON } from "@/lib/constants";
 
-export const dynamic = "force-dynamic";
-export const revalidate = 300;
 export const metadata = { title: "Archive" };
 
 export default async function ArchivePage() {
