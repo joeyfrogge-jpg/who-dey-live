@@ -1,4 +1,4 @@
-import { getBengalsSchedule, getNextGame, getNextHomeGame, getLiveGame, getRecentResults, getBengalsScore, didBengalsWin } from "@/lib/api/bengals";
+import { getBengalsSchedule, getNextGame, getNextHomeGame, getLiveGame, getRecentResults } from "@/lib/api/bengals";
 import { HomeGameSpotlight } from "@/components/games/HomeGameSpotlight";
 import { GameCard } from "@/components/schedule/GameCard";
 import { Scoreboard } from "@/components/scoreboard/Scoreboard";
@@ -6,6 +6,7 @@ import { Countdown } from "@/components/animations/Countdown";
 import { Badge } from "@/components/ui/Badge";
 import Link from "next/link";
 import { APP_TAGLINE } from "@/lib/constants";
+import { Radio, Calendar, Users, UsersRound } from "lucide-react";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 60;
@@ -18,52 +19,57 @@ export default async function HomePage() {
   const recent = getRecentResults(games, 4);
 
   return (
-    <div className="space-y-10">
+    <div className="space-y-8">
       {/* Hero */}
-      <section className="text-center py-6">
-        <h1 className="font-display text-4xl md:text-6xl tracking-tight">
+      <section className="text-center pt-2 pb-4">
+        <h1 className="font-display text-4xl sm:text-5xl md:text-6xl tracking-tight leading-none">
           WHO DEY <span className="text-bengals-orange">LIVE</span>
         </h1>
-        <p className="mt-2 text-bengals-gray-light max-w-lg mx-auto">{APP_TAGLINE}</p>
+        <p className="mt-2 text-sm sm:text-base text-bengals-gray-light max-w-md mx-auto">
+          {APP_TAGLINE}
+        </p>
         {freshness.isDemo && (
-          <p className="mt-3 text-xs text-bengals-gray">
+          <p className="mt-3 text-xs text-bengals-gray flex items-center justify-center gap-2">
             <Badge variant="alert">DEMO DATA</Badge>
-            <span className="ml-2">Using 2025 schedule fallback. Connect ESPN or set FORCE_DEMO=false.</span>
+            <span>Using 2025 schedule fallback</span>
           </p>
         )}
       </section>
 
       {/* Live game spotlight */}
       {live && (
-        <section>
-          <h2 className="font-display text-xl mb-4 flex items-center gap-2">
-            <span className="inline-block h-2 w-2 rounded-full bg-bengals-red animate-pulse" />
+        <section className="space-y-4">
+          <h2 className="font-display text-lg flex items-center gap-2">
+            <span className="inline-block h-2.5 w-2.5 rounded-full bg-bengals-red animate-pulse" />
             LIVE NOW
           </h2>
           <Scoreboard game={live} large showVenue />
-          <div className="mt-4 text-center">
+          <div className="text-center">
             <Link
               href={`/game/${live.id}`}
-              className="inline-flex rounded-md bg-bengals-orange px-5 py-2.5 font-bold text-black hover:bg-bengals-orange-bright"
+              className="inline-flex items-center gap-2 rounded-lg bg-bengals-orange px-6 py-3 font-bold text-black shadow-orange-glow hover:bg-bengals-orange-bright active:scale-[0.98] transition-all"
             >
               Open Game Center
+              <span className="text-lg">→</span>
             </Link>
           </div>
         </section>
       )}
 
       {/* Next home game — highest visual priority */}
-      {nextHome && nextHome.id !== next?.id && (
-        <section>
-          <h2 className="font-display text-xl mb-4 text-bengals-orange">NEXT HOME GAME</h2>
+      {nextHome && (!next || nextHome.id !== next.id) && (
+        <section className="space-y-3">
+          <h2 className="font-display text-lg text-bengals-orange tracking-wide">
+            NEXT HOME GAME
+          </h2>
           <HomeGameSpotlight game={nextHome} />
         </section>
       )}
 
-      {/* Next game (if not already shown as home) */}
+      {/* Next game */}
       {next && (
-        <section>
-          <h2 className="font-display text-xl mb-4">
+        <section className="space-y-3">
+          <h2 className="font-display text-lg tracking-wide">
             {next.isBengalsHome ? "NEXT HOME GAME" : "NEXT GAME"}
           </h2>
           {next.isBengalsHome ? (
@@ -71,8 +77,8 @@ export default async function HomePage() {
           ) : (
             <div className="space-y-4">
               <GameCard game={next} featured />
-              <div className="rounded-lg border border-bengals-charcoal-light bg-bengals-charcoal p-4">
-                <p className="text-xs uppercase tracking-widest text-bengals-gray mb-3 text-center">
+              <div className="rounded-xl border border-bengals-charcoal-light bg-bengals-charcoal p-5">
+                <p className="text-[11px] uppercase tracking-[0.2em] text-bengals-gray mb-4 text-center">
                   Kickoff Countdown
                 </p>
                 <Countdown target={next.date} size="md" />
@@ -84,10 +90,13 @@ export default async function HomePage() {
 
       {/* Recent results */}
       {recent.length > 0 && (
-        <section>
-          <div className="flex items-center justify-between mb-4">
-            <h2 className="font-display text-xl">RECENT RESULTS</h2>
-            <Link href="/archive" className="text-sm text-bengals-orange hover:underline">
+        <section className="space-y-3">
+          <div className="flex items-center justify-between">
+            <h2 className="font-display text-lg tracking-wide">RECENT RESULTS</h2>
+            <Link
+              href="/archive"
+              className="text-sm text-bengals-orange hover:underline"
+            >
               View archive →
             </Link>
           </div>
@@ -99,20 +108,22 @@ export default async function HomePage() {
         </section>
       )}
 
-      {/* Quick links */}
-      <section className="grid grid-cols-2 md:grid-cols-4 gap-3">
+      {/* Quick links — match mockup style */}
+      <section className="grid grid-cols-2 gap-3">
         {[
-          { href: "/schedule", label: "Full Schedule" },
-          { href: "/players", label: "Roster" },
-          { href: "/archive", label: "Game Archive" },
-          { href: "/settings", label: "Settings" },
+          { href: "/schedule", label: "Schedule", sub: "Scores & Times", icon: Calendar },
+          { href: "/players", label: "Players", sub: "Roster & Stats", icon: Users },
+          { href: live ? `/game/${live.id}` : "/schedule", label: "Live", sub: "Bengals Live", icon: Radio },
+          { href: "/archive", label: "Community", sub: "Fans & Culture", icon: UsersRound },
         ].map((l) => (
           <Link
-            key={l.href}
+            key={l.href + l.label}
             href={l.href}
-            className="rounded-lg border border-bengals-charcoal-light bg-bengals-charcoal p-4 text-center font-medium hover:border-bengals-orange/40 hover:text-bengals-orange transition-colors"
+            className="flex flex-col items-start gap-1 rounded-xl border border-bengals-charcoal-light bg-bengals-charcoal p-4 hover:border-bengals-orange/50 hover:bg-bengals-charcoal-mid transition-colors"
           >
-            {l.label}
+            <l.icon className="h-5 w-5 text-bengals-orange mb-1" />
+            <span className="font-medium text-white">{l.label}</span>
+            <span className="text-xs text-bengals-gray">{l.sub}</span>
           </Link>
         ))}
       </section>
