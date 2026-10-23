@@ -11,6 +11,8 @@
 
 html {
   scroll-behavior: smooth;
+  overscroll-behavior-y: none;
+  -webkit-text-size-adjust: 100%;
 }
 
 body {
@@ -18,9 +20,11 @@ body {
   color: #fff;
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  min-height: 100vh;
+  min-height: 100dvh;
+  -webkit-tap-highlight-color: transparent;
 }
 
-/* Respect reduced motion */
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
@@ -28,14 +32,21 @@ body {
     animation-duration: 0.01ms !important;
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
   }
 }
 
+.safe-top {
+  padding-top: env(safe-area-inset-top, 0px);
+}
 .safe-bottom {
-  padding-bottom: env(safe-area-inset-bottom, 0);
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+}
+.safe-x {
+  padding-left: env(safe-area-inset-left, 0px);
+  padding-right: env(safe-area-inset-right, 0px);
 }
 
-/* Scoreboard numerals */
 .font-score {
   font-variant-numeric: tabular-nums;
   letter-spacing: -0.02em;
@@ -44,4 +55,20 @@ body {
 .font-display {
   font-family: var(--font-display);
   letter-spacing: -0.03em;
+}
+
+@supports not ((-webkit-backdrop-filter: blur(8px)) or (backdrop-filter: blur(8px))) {
+  .backdrop-blur-md {
+    background-color: rgba(10, 10, 10, 0.97) !important;
+  }
+}
+
+.overscroll-contain {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: contain;
+}
+
+.fixed {
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
