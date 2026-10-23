@@ -18,13 +18,12 @@ function calculateMeter(game: Game): number {
   let base = 50 + diff * 4;
 
   if (game.status === "live") {
-    // Late-game swings matter more
     const period = Number(game.period) || 1;
     if (period >= 4) base += diff > 0 ? 15 : -10;
     if (diff > 0) base += 10;
   }
   if (game.status === "final") {
-    base = diff > 0 ? 90 : diff < 0 ? 15 : 50;
+    base = diff > 0 ? 92 : diff < 0 ? 18 : 50;
   }
   if (game.status === "halftime") {
     base = 50 + diff * 3;
@@ -39,30 +38,44 @@ interface Props {
 
 export function WhoDeyMeter({ game }: Props) {
   const value = calculateMeter(game);
+  const isHot = value >= 70;
+  const isWarm = value >= 40;
 
   return (
-    <div className="rounded-lg border border-bengals-charcoal-light bg-bengals-charcoal p-4">
-      <div className="flex items-center justify-between mb-2">
-        <h3 className="font-display text-sm tracking-wide text-bengals-orange">
-          WHO DEY METER
-        </h3>
-        <span className="text-xs text-bengals-gray">Fan energy (app-generated)</span>
+    <div className="rounded-xl border border-bengals-charcoal-light bg-bengals-charcoal p-4">
+      <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center gap-2">
+          <div className="flex h-6 w-6 items-center justify-center rounded bg-bengals-orange/20">
+            <span className="text-xs font-bold text-bengals-orange">1</span>
+          </div>
+          <h3 className="font-display text-sm tracking-wide text-white">
+            WHO DEY METER
+          </h3>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="font-score text-lg font-bold text-white">{value}%</span>
+          {isHot && <span className="text-bengals-orange text-sm">🔥</span>}
+        </div>
       </div>
-      <div className="relative h-4 rounded-full bg-bengals-near-black overflow-hidden">
+
+      <div className="relative h-3.5 rounded-full bg-bengals-near-black overflow-hidden">
         <motion.div
           className={cn(
             "h-full rounded-full",
-            value >= 70 ? "bg-gradient-to-r from-bengals-orange to-bengals-orange-bright" :
-            value >= 40 ? "bg-bengals-orange/80" : "bg-bengals-gray"
+            isHot
+              ? "bg-gradient-to-r from-bengals-orange to-bengals-orange-bright shadow-[0_0_12px_rgba(251,79,20,0.5)]"
+              : isWarm
+              ? "bg-bengals-orange/80"
+              : "bg-bengals-gray"
           )}
           initial={{ width: 0 }}
           animate={{ width: `${value}%` }}
-          transition={{ duration: 0.8, ease: "easeOut" }}
+          transition={{ duration: 0.9, ease: "easeOut" }}
         />
       </div>
-      <p className="mt-2 text-right font-score text-lg text-white">{value}</p>
-      <p className="text-[10px] text-bengals-gray mt-1">
-        Playful visualization based on score & game state. Not official.
+
+      <p className="mt-2 text-[10px] text-bengals-gray">
+        App-generated fan energy · based on score & game state · not official
       </p>
     </div>
   );
