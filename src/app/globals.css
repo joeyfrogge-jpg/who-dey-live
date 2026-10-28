@@ -5,7 +5,7 @@
 :root {
   --font-display: "Arial Black", Impact, "Helvetica Neue", sans-serif;
   --font-score: "SF Mono", "Roboto Mono", ui-monospace, monospace;
-  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --font-body: system-ui, -apple-system, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
   color-scheme: dark;
 }
 
@@ -13,6 +13,9 @@ html {
   scroll-behavior: smooth;
   overscroll-behavior-y: none;
   -webkit-text-size-adjust: 100%;
+  /* Prevent iOS bounce / rubber-band on the whole page */
+  height: 100%;
+  height: -webkit-fill-available;
 }
 
 body {
@@ -20,9 +23,23 @@ body {
   color: #fff;
   font-family: var(--font-body);
   -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
   min-height: 100vh;
   min-height: 100dvh;
+  min-height: -webkit-fill-available;
   -webkit-tap-highlight-color: transparent;
+  /* Better touch scrolling on iOS */
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior: none;
+}
+
+/* Hide the default Safari bottom bar feel when in standalone */
+@media all and (display-mode: standalone) {
+  body {
+    /* Extra polish when launched from Home Screen */
+    user-select: none;
+    -webkit-user-select: none;
+  }
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -68,6 +85,11 @@ body {
   overscroll-behavior: contain;
 }
 
+.overscroll-none {
+  overscroll-behavior: none;
+}
+
+/* Force hardware acceleration for fixed bottom nav on iOS */
 .fixed {
   -webkit-transform: translateZ(0);
   transform: translateZ(0);
