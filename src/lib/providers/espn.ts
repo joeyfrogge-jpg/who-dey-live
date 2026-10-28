@@ -283,6 +283,8 @@ export async function fetchEspnRoster(_season: number): Promise<{
   players: RosterPlayer[];
   error?: string;
 }> {
+  // _season is accepted for API consistency but ESPN roster endpoint does not filter by season
+  void _season;
   try {
     const url = `${ESPN_BASE}/teams/${TEAM_ID}/roster`;
     const res = await fetch(url, {

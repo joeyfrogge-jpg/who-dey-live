@@ -1,8 +1,7 @@
-# Deploy trigger
+# FORCE CLEAN REBUILD
 
-Force clean rebuild: 2026-10-28 02:23 AM EDT
+Timestamp: 2026-10-28 02:26 AM EDT
 
-All TypeScript errors fixed.
-Unused imports cleaned.
-ThemeAudio fixed.
-iOS PWA ready.
+ThemeAudio completely rewritten (no playsInline property).
+All unused variables cleaned.
+This commit must produce a successful build.
