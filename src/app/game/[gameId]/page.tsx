@@ -1,4 +1,4 @@
-import { getGameDetail, getBengalsScore, getBengalsSchedule } from "@/lib/api/bengals";
+import { getGameDetail, getBengalsSchedule } from "@/lib/api/bengals";
 import { Scoreboard } from "@/components/scoreboard/Scoreboard";
 import { WhoDeyMeter } from "@/components/games/WhoDeyMeter";
 import { Badge } from "@/components/ui/Badge";

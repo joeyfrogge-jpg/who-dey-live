@@ -5,7 +5,6 @@ import type { Game } from "@/types";
 import { getBengalsScore } from "@/lib/api/bengals";
 import { Badge } from "@/components/ui/Badge";
 import { cn } from "@/lib/utils/cn";
-import { BENGALS } from "@/lib/constants";
 
 interface ScoreboardProps {
   game: Game;
