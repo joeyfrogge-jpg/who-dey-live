@@ -1,6 +1,7 @@
 /**
- * Verified fallback data (2026 current season).
+ * Verified fallback data (2026 current season as of Oct 28 2026).
  * Used only when ESPN is unreachable.
+ * Record: 4-2. Last: W 35-13 @ BAL. Next: vs TEN Nov 1.
  */
 
 import type { Game, GameDetail, RosterPlayer, Team } from "@/types";
@@ -139,12 +140,13 @@ export const DEMO_SCHEDULE: Game[] = [
     shortName: "CIN @ BAL",
     date: "2026-10-25T17:00:00Z",
     kickoffEastern: "Sun, Oct 25 · 1:00 PM EDT",
-    status: "upcoming",
+    status: "final",
     venue: "M&T Bank Stadium",
     isHome: false,
     isBengalsHome: false,
-    bengals: { ...CIN, record: "3-2" },
+    bengals: { ...CIN, record: "4-2" },
     opponent: opp("BAL", "Ravens", "Baltimore", "33"),
+    score: { home: 13, away: 35 },
   },
   {
     id: "20261101-ten",
@@ -159,8 +161,40 @@ export const DEMO_SCHEDULE: Game[] = [
     venue: "Paycor Stadium",
     isHome: true,
     isBengalsHome: true,
-    bengals: CIN,
+    bengals: { ...CIN, record: "4-2" },
     opponent: opp("TEN", "Titans", "Tennessee", "10"),
+  },
+  {
+    id: "20261108-atl",
+    season: 2026,
+    seasonType: "regular",
+    week: 9,
+    name: "Cincinnati Bengals at Atlanta Falcons",
+    shortName: "CIN @ ATL",
+    date: "2026-11-08T14:30:00Z",
+    kickoffEastern: "Sun, Nov 8 · 9:30 AM EST",
+    status: "upcoming",
+    venue: "Santiago Bernabéu (Madrid)",
+    isHome: false,
+    isBengalsHome: false,
+    bengals: CIN,
+    opponent: opp("ATL", "Falcons", "Atlanta", "1"),
+  },
+  {
+    id: "20261115-pit",
+    season: 2026,
+    seasonType: "regular",
+    week: 10,
+    name: "Pittsburgh Steelers at Cincinnati Bengals",
+    shortName: "PIT @ CIN",
+    date: "2026-11-16T01:20:00Z",
+    kickoffEastern: "Sun, Nov 15 · 8:20 PM EST",
+    status: "upcoming",
+    venue: "Paycor Stadium",
+    isHome: true,
+    isBengalsHome: true,
+    bengals: CIN,
+    opponent: opp("PIT", "Steelers", "Pittsburgh", "23"),
   },
 ];
 
@@ -168,13 +202,15 @@ export const DEMO_ROSTER: RosterPlayer[] = [
   { id: "3918298", fullName: "Joe Burrow", jersey: "9", position: "QB", headshot: "https://a.espncdn.com/i/headshots/nfl/players/full/3918298.png", status: "active", college: "LSU" },
   { id: "4362628", fullName: "Ja'Marr Chase", jersey: "1", position: "WR", headshot: "https://a.espncdn.com/i/headshots/nfl/players/full/4362628.png", status: "active", college: "LSU" },
   { id: "4035538", fullName: "Tee Higgins", jersey: "5", position: "WR", headshot: "https://a.espncdn.com/i/headshots/nfl/players/full/4035538.png", status: "active", college: "Clemson" },
-  { id: "4429020", fullName: "Chase Brown", jersey: "30", position: "RB", status: "active", college: "Illinois" },
+  { id: "4429020", fullName: "Chase Brown", jersey: "30", position: "RB", headshot: "https://a.espncdn.com/i/headshots/nfl/players/full/4429020.png", status: "active", college: "Illinois" },
   { id: "3054850", fullName: "Mike Gesicki", jersey: "88", position: "TE", status: "active", college: "Penn State" },
   { id: "3121421", fullName: "Orlando Brown Jr.", jersey: "75", position: "OT", status: "active", college: "Oklahoma" },
   { id: "3915418", fullName: "Sam Hubbard", jersey: "94", position: "DE", status: "active", college: "Ohio State" },
   { id: "4241474", fullName: "Logan Wilson", jersey: "55", position: "LB", status: "active", college: "Wyoming" },
   { id: "4241479", fullName: "Jessie Bates III", jersey: "3", position: "S", status: "active", college: "Wake Forest" },
   { id: "4241478", fullName: "Evan McPherson", jersey: "2", position: "K", status: "active", college: "Florida" },
+  { id: "3051397", fullName: "Samaje Perine", jersey: "34", position: "RB", status: "active", college: "Oklahoma" },
+  { id: "4361411", fullName: "Daxton Hill", jersey: "23", position: "DB", status: "active", college: "Michigan" },
 ];
 
 export function getDemoGameDetail(gameId: string): GameDetail | null {

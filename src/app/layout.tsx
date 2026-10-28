@@ -1,6 +1,7 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { Shell } from "@/components/layout/Shell";
+import { ThemeAudio } from "@/components/audio/ThemeAudio";
 import { APP_NAME, APP_TAGLINE } from "@/lib/constants";
 
 export const metadata: Metadata = {
@@ -43,6 +44,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
       </head>
       <body className="min-h-dvh antialiased touch-manipulation">
+        <ThemeAudio />
         <Shell>{children}</Shell>
       </body>
     </html>
