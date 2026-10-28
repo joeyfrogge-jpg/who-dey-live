@@ -19,10 +19,9 @@ export function ThemeAudio() {
     audio.preload = "auto";
     audio.loop = false;
     audio.volume = 0.75;
-    // Critical for iOS: playsInline + no controls
+    // Critical for iOS Safari
     audio.setAttribute("playsinline", "true");
     audio.setAttribute("webkit-playsinline", "true");
-    audio.playsInline = true;
     audioRef.current = audio;
 
     const tryPlay = async () => {
