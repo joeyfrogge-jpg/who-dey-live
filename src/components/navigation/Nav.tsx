@@ -22,6 +22,7 @@ export function Nav() {
 
   return (
     <>
+      {/* Desktop top nav */}
       <header className="hidden md:block sticky top-0 z-50 border-b border-bengals-charcoal-light bg-bengals-near-black/95 backdrop-blur-md">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4">
           <Link href="/" className="flex items-center gap-3 group">
@@ -62,8 +63,12 @@ export function Nav() {
         </div>
       </header>
 
-      <nav className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-bengals-charcoal-light bg-bengals-near-black/95 backdrop-blur-md safe-bottom">
-        <div className="flex justify-around py-2">
+      {/* iOS / mobile bottom tab bar — large touch targets (min 44pt) */}
+      <nav
+        className="md:hidden fixed bottom-0 inset-x-0 z-50 border-t border-bengals-charcoal-light bg-bengals-near-black/95 backdrop-blur-md safe-bottom"
+        style={{ paddingBottom: "env(safe-area-inset-bottom, 0px)" }}
+      >
+        <div className="flex justify-around items-stretch h-16">
           {links.map(({ href, label, icon: Icon }) => {
             const active =
               href === "/"
@@ -78,17 +83,19 @@ export function Nav() {
                 key={href}
                 href={href}
                 className={cn(
-                  "flex flex-col items-center gap-0.5 px-2 py-1 text-[10px] font-medium min-w-[56px]",
+                  "flex flex-1 flex-col items-center justify-center gap-0.5 text-[10px] font-medium min-w-[56px] active:scale-95 transition-transform",
                   active ? "text-bengals-orange" : "text-bengals-gray"
                 )}
+                style={{ WebkitTapHighlightColor: "transparent" }}
               >
                 <Icon
                   className={cn(
-                    "h-5 w-5",
-                    active && "drop-shadow-[0_0_6px_rgba(251,79,20,0.6)]"
+                    "h-6 w-6",
+                    active && "drop-shadow-[0_0_8px_rgba(251,79,20,0.7)]"
                   )}
+                  strokeWidth={active ? 2.5 : 2}
                 />
-                {label}
+                <span className="leading-none">{label}</span>
               </Link>
             );
           })}

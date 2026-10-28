@@ -3,6 +3,7 @@
   "short_name": "Who Dey Live",
   "description": "One team. Every Bengals game. Every meaningful moment. Live scores, Game Center, roster, schedule, and home-field energy for Cincinnati Bengals fans.",
   "start_url": "/",
+  "scope": "/",
   "display": "standalone",
   "orientation": "portrait-primary",
   "background_color": "#0A0A0A",
@@ -10,6 +11,12 @@
   "lang": "en-US",
   "categories": ["sports", "entertainment"],
   "icons": [
+    {
+      "src": "/icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any"
+    },
     {
       "src": "https://a.espncdn.com/i/teamlogos/nfl/500/cin.png",
       "sizes": "512x512",
@@ -20,7 +27,7 @@
       "src": "https://a.espncdn.com/i/teamlogos/nfl/500/cin.png",
       "sizes": "192x192",
       "type": "image/png",
-      "purpose": "any maskable"
+      "purpose": "maskable"
     }
   ]
 }

@@ -52,6 +52,16 @@ export const metadata: Metadata = {
     "apple-mobile-web-app-status-bar-style": "black-translucent",
     "apple-mobile-web-app-title": APP_NAME,
   },
+  icons: {
+    icon: [
+      { url: "/icon.svg", type: "image/svg+xml" },
+      { url: "https://a.espncdn.com/i/teamlogos/nfl/500/cin.png", sizes: "512x512", type: "image/png" },
+    ],
+    apple: [
+      { url: "/icon.svg" },
+      { url: "https://a.espncdn.com/i/teamlogos/nfl/500/cin.png", sizes: "180x180" },
+    ],
+  },
 };
 
 export const viewport: Viewport = {
@@ -75,7 +85,6 @@ export default function RootLayout({
   return (
     <html lang="en" className="dark">
       <head>
-        {/* iOS PWA & standalone mode */}
         <link rel="manifest" href="/manifest.webmanifest" />
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta
@@ -84,26 +93,12 @@ export default function RootLayout({
         />
         <meta name="apple-mobile-web-app-title" content={APP_NAME} />
         <meta name="mobile-web-app-capable" content="yes" />
-        <meta name="theme-color" content="#FB4F14" />
+        <meta name="theme-color" content="#FB4F14" media="(prefers-color-scheme: light)" />
+        <meta name="theme-color" content="#0A0A0A" media="(prefers-color-scheme: dark)" />
         <meta name="msapplication-TileColor" content="#FB4F14" />
-
-        {/* Apple touch icons (Bengals logo as primary) */}
-        <link
-          rel="apple-touch-icon"
-          href="https://a.espncdn.com/i/teamlogos/nfl/500/cin.png"
-        />
-        <link
-          rel="apple-touch-icon"
-          sizes="180x180"
-          href="https://a.espncdn.com/i/teamlogos/nfl/500/cin.png"
-        />
-        <link
-          rel="icon"
-          type="image/png"
-          href="https://a.espncdn.com/i/teamlogos/nfl/500/cin.png"
-        />
-
-        {/* Prevent phone number detection & unwanted formatting */}
+        <link rel="apple-touch-icon" href="/icon.svg" />
+        <link rel="apple-touch-icon" sizes="180x180" href="https://a.espncdn.com/i/teamlogos/nfl/500/cin.png" />
+        <link rel="icon" type="image/svg+xml" href="/icon.svg" />
         <meta name="format-detection" content="telephone=no" />
       </head>
       <body className="min-h-dvh antialiased touch-manipulation overscroll-none">
